@@ -34,13 +34,18 @@ describe("auto-update-checker constants", () => {
     expect(ACCEPTED_PACKAGE_NAMES).toContain("oh-my-openagent")
   })
 
-  it("INSTALLED_PACKAGE_JSON_CANDIDATES covers every accepted package name (GH-3257)", async () => {
+  it("INSTALLED_PACKAGE_JSON_CANDIDATES covers the actual OpenCode cache layout (GH-3257)", async () => {
     const { ACCEPTED_PACKAGE_NAMES, INSTALLED_PACKAGE_JSON_CANDIDATES, CACHE_DIR } = await import(
       `./constants?test=${Date.now()}`
     )
 
-    expect(INSTALLED_PACKAGE_JSON_CANDIDATES).toHaveLength(ACCEPTED_PACKAGE_NAMES.length)
     for (const name of ACCEPTED_PACKAGE_NAMES) {
+      expect(INSTALLED_PACKAGE_JSON_CANDIDATES).toContain(
+        join(CACHE_DIR, `${name}@latest`, "node_modules", name, "package.json")
+      )
+      expect(INSTALLED_PACKAGE_JSON_CANDIDATES).toContain(
+        join(CACHE_DIR, name, "node_modules", name, "package.json")
+      )
       expect(INSTALLED_PACKAGE_JSON_CANDIDATES).toContain(
         join(CACHE_DIR, "node_modules", name, "package.json")
       )

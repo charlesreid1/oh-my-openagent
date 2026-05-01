@@ -49,10 +49,25 @@ export const INSTALLED_PACKAGE_JSON = path.join(
   "package.json"
 )
 
+const VERSION_SUFFIXES = ["@latest", ""]
+
 /**
  * Candidate paths where the installed package.json may live, in priority order.
  * Readers should try each path in order and stop on the first success.
+ *
+ * OpenCode caches plugins at `packages/<entry>/node_modules/<name>/package.json`
+ * where `<entry>` is the full plugin string from opencode.json (e.g.,
+ * "oh-my-openagent@latest"). We generate candidates for each combination of
+ * accepted package name and known version suffix, plus the legacy flat layout
+ * (`packages/node_modules/<name>/`) for backwards compatibility.
  */
-export const INSTALLED_PACKAGE_JSON_CANDIDATES = ACCEPTED_PACKAGE_NAMES.map(
-  name => path.join(CACHE_DIR, "node_modules", name, "package.json")
-)
+export const INSTALLED_PACKAGE_JSON_CANDIDATES = [
+  ...ACCEPTED_PACKAGE_NAMES.flatMap(name =>
+    VERSION_SUFFIXES.map(suffix =>
+      path.join(CACHE_DIR, `${name}${suffix}`, "node_modules", name, "package.json")
+    )
+  ),
+  ...ACCEPTED_PACKAGE_NAMES.map(
+    name => path.join(CACHE_DIR, "node_modules", name, "package.json")
+  ),
+]

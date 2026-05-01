@@ -33,6 +33,10 @@ describe("getCachedVersion (GH-3257)", () => {
   beforeEach(() => {
     cacheRoot = mkdtempSync(join(tmpdir(), "omo-cached-version-"))
     mockState.candidates = [
+      join(cacheRoot, "oh-my-opencode@latest", "node_modules", "oh-my-opencode", "package.json"),
+      join(cacheRoot, "oh-my-opencode", "node_modules", "oh-my-opencode", "package.json"),
+      join(cacheRoot, "oh-my-openagent@latest", "node_modules", "oh-my-openagent", "package.json"),
+      join(cacheRoot, "oh-my-openagent", "node_modules", "oh-my-openagent", "package.json"),
       join(cacheRoot, "node_modules", "oh-my-opencode", "package.json"),
       join(cacheRoot, "node_modules", "oh-my-openagent", "package.json"),
     ]
@@ -43,18 +47,23 @@ describe("getCachedVersion (GH-3257)", () => {
     mockState.candidates = []
   })
 
+  it("returns the version from the actual OpenCode cache layout", () => {
+    const pkgDir = join(cacheRoot, "oh-my-openagent@latest", "node_modules", "oh-my-openagent")
+    mkdirSync(pkgDir, { recursive: true })
+    writeFileSync(join(pkgDir, "package.json"), JSON.stringify({ name: "oh-my-openagent", version: "3.17.12" }))
+
+    expect(getCachedVersion()).toBe("3.17.12")
+  })
+
   it("returns the version when the package is installed under oh-my-opencode", () => {
-    const pkgDir = join(cacheRoot, "node_modules", "oh-my-opencode")
+    const pkgDir = join(cacheRoot, "oh-my-opencode@latest", "node_modules", "oh-my-opencode")
     mkdirSync(pkgDir, { recursive: true })
     writeFileSync(join(pkgDir, "package.json"), JSON.stringify({ name: "oh-my-opencode", version: "3.16.0" }))
 
     expect(getCachedVersion()).toBe("3.16.0")
   })
 
-  it("returns the version when the package is installed under oh-my-openagent", () => {
-    // GH-3257: npm users who install the aliased `oh-my-openagent` package get
-    // node_modules/oh-my-openagent/package.json, not the canonical oh-my-opencode
-    // path. The cached version resolver must check both.
+  it("returns the version from legacy flat layout", () => {
     const pkgDir = join(cacheRoot, "node_modules", "oh-my-openagent")
     mkdirSync(pkgDir, { recursive: true })
     writeFileSync(join(pkgDir, "package.json"), JSON.stringify({ name: "oh-my-openagent", version: "3.16.0" }))
@@ -62,16 +71,16 @@ describe("getCachedVersion (GH-3257)", () => {
     expect(getCachedVersion()).toBe("3.16.0")
   })
 
-  it("prefers oh-my-opencode when both are installed", () => {
+  it("prefers oh-my-opencode@latest over legacy flat layout", () => {
+    const newDir = join(cacheRoot, "oh-my-opencode@latest", "node_modules", "oh-my-opencode")
+    mkdirSync(newDir, { recursive: true })
+    writeFileSync(join(newDir, "package.json"), JSON.stringify({ name: "oh-my-opencode", version: "3.17.0" }))
+
     const legacyDir = join(cacheRoot, "node_modules", "oh-my-opencode")
     mkdirSync(legacyDir, { recursive: true })
-    writeFileSync(join(legacyDir, "package.json"), JSON.stringify({ name: "oh-my-opencode", version: "3.16.0" }))
+    writeFileSync(join(legacyDir, "package.json"), JSON.stringify({ name: "oh-my-opencode", version: "3.15.0" }))
 
-    const aliasDir = join(cacheRoot, "node_modules", "oh-my-openagent")
-    mkdirSync(aliasDir, { recursive: true })
-    writeFileSync(join(aliasDir, "package.json"), JSON.stringify({ name: "oh-my-openagent", version: "3.15.0" }))
-
-    expect(getCachedVersion()).toBe("3.16.0")
+    expect(getCachedVersion()).toBe("3.17.0")
   })
 
   it("returns null when neither candidate exists and fallbacks find nothing", () => {
