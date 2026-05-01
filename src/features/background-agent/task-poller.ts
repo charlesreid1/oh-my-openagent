@@ -7,6 +7,7 @@ import type { ConcurrencyManager } from "./concurrency"
 import type { OpencodeClient } from "./opencode-client"
 
 import {
+  DEFAULT_AGENT_STALE_TIMEOUTS,
   DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS,
   DEFAULT_SESSION_GONE_TIMEOUT_MS,
   DEFAULT_STALE_TIMEOUT_MS,
@@ -120,15 +121,23 @@ export async function checkAndInterruptStaleTasks(args: {
     sessionStatuses,
     onTaskInterrupted = (task) => removeTaskToastTracking(task.id),
   } = args
-  const staleTimeoutMs = config?.staleTimeoutMs ?? DEFAULT_STALE_TIMEOUT_MS
   const sessionGoneTimeoutMs = config?.sessionGoneTimeoutMs ?? DEFAULT_SESSION_GONE_TIMEOUT_MS
   const now = Date.now()
   const abortPromises: Array<Promise<unknown>> = []
 
-  const messageStalenessMs = config?.messageStalenessTimeoutMs ?? DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS
-
   for (const task of tasks) {
     if (task.status !== "running") continue
+
+    const agentOverride = config?.agentOverrides?.[task.agent]
+    const staleTimeoutMs =
+      agentOverride?.staleTimeoutMs
+      ?? config?.staleTimeoutMs
+      ?? DEFAULT_AGENT_STALE_TIMEOUTS[task.agent]
+      ?? DEFAULT_STALE_TIMEOUT_MS
+    const messageStalenessMs =
+      agentOverride?.staleTimeoutMs
+      ?? config?.messageStalenessTimeoutMs
+      ?? DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS
 
     const startedAt = task.startedAt
     const sessionID = task.sessionID

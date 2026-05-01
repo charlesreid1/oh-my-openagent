@@ -12,6 +12,14 @@ export const DEFAULT_CIRCUIT_BREAKER_ENABLED = true
 export const MIN_RUNTIME_BEFORE_STALE_MS = 30_000
 export const DEFAULT_SESSION_GONE_TIMEOUT_MS = 60_000
 export const MIN_IDLE_TIME_MS = 5000
+export const DEFAULT_AGENT_TOOL_CALL_LIMITS: Record<string, number> = {
+  librarian: 25,
+  explore: 40,
+}
+export const DEFAULT_AGENT_STALE_TIMEOUTS: Record<string, number> = {
+  librarian: 300_000,
+  explore: 180_000,
+}
 export const POLLING_INTERVAL_MS = 3000
 export const TASK_CLEANUP_DELAY_MS = 10 * 60 * 1000
 export const TMUX_CALLBACK_DELAY_MS = 200

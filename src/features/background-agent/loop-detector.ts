@@ -3,6 +3,7 @@ import {
   DEFAULT_CIRCUIT_BREAKER_ENABLED,
   DEFAULT_CIRCUIT_BREAKER_CONSECUTIVE_THRESHOLD,
   DEFAULT_MAX_TOOL_CALLS,
+  DEFAULT_AGENT_TOOL_CALL_LIMITS,
 } from "./constants"
 import type { ToolCallWindow } from "./types"
 
@@ -19,14 +20,23 @@ export interface ToolLoopDetectionResult {
 }
 
 export function resolveCircuitBreakerSettings(
-  config?: BackgroundTaskConfig
+  config?: BackgroundTaskConfig,
+  agentName?: string,
 ): CircuitBreakerSettings {
+  const agentOverride = agentName ? config?.agentOverrides?.[agentName] : undefined
+
   return {
     enabled: config?.circuitBreaker?.enabled ?? DEFAULT_CIRCUIT_BREAKER_ENABLED,
     maxToolCalls:
-      config?.circuitBreaker?.maxToolCalls ?? config?.maxToolCalls ?? DEFAULT_MAX_TOOL_CALLS,
+      agentOverride?.maxToolCalls
+      ?? config?.circuitBreaker?.maxToolCalls
+      ?? config?.maxToolCalls
+      ?? DEFAULT_AGENT_TOOL_CALL_LIMITS[agentName ?? ""]
+      ?? DEFAULT_MAX_TOOL_CALLS,
     consecutiveThreshold:
-      config?.circuitBreaker?.consecutiveThreshold ?? DEFAULT_CIRCUIT_BREAKER_CONSECUTIVE_THRESHOLD,
+      agentOverride?.consecutiveThreshold
+      ?? config?.circuitBreaker?.consecutiveThreshold
+      ?? DEFAULT_CIRCUIT_BREAKER_CONSECUTIVE_THRESHOLD,
   }
 }
 

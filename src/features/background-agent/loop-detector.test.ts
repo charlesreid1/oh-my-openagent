@@ -91,6 +91,62 @@ describe("loop-detector", () => {
         expect(result.enabled).toBe(true)
       })
     })
+
+    describe("#given agentName is librarian", () => {
+      test("#when resolved without config #then maxToolCalls is 25", () => {
+        const result = resolveCircuitBreakerSettings(undefined, "librarian")
+
+        expect(result.maxToolCalls).toBe(25)
+      })
+    })
+
+    describe("#given agentName is explore", () => {
+      test("#when resolved without config #then maxToolCalls is 40", () => {
+        const result = resolveCircuitBreakerSettings(undefined, "explore")
+
+        expect(result.maxToolCalls).toBe(40)
+      })
+    })
+
+    describe("#given agentName is unknown", () => {
+      test("#when resolved without config #then maxToolCalls is global default", () => {
+        const result = resolveCircuitBreakerSettings(undefined, "oracle")
+
+        expect(result.maxToolCalls).toBe(4000)
+      })
+    })
+
+    describe("#given agentOverrides in config for librarian", () => {
+      test("#when resolved #then config override beats built-in default", () => {
+        const result = resolveCircuitBreakerSettings({
+          agentOverrides: {
+            librarian: { maxToolCalls: 15 },
+          },
+        }, "librarian")
+
+        expect(result.maxToolCalls).toBe(15)
+      })
+
+      test("#when consecutiveThreshold overridden #then config override is used", () => {
+        const result = resolveCircuitBreakerSettings({
+          agentOverrides: {
+            librarian: { consecutiveThreshold: 5 },
+          },
+        }, "librarian")
+
+        expect(result.consecutiveThreshold).toBe(5)
+      })
+    })
+
+    describe("#given no agentName", () => {
+      test("#when resolved #then global defaults apply", () => {
+        const result = resolveCircuitBreakerSettings()
+
+        expect(result.maxToolCalls).toBe(4000)
+        expect(result.consecutiveThreshold).toBe(20)
+        expect(result.enabled).toBe(true)
+      })
+    })
   })
 
   describe("createToolCallSignature", () => {

@@ -79,7 +79,6 @@ import {
   detectRepetitiveToolUse,
   recordToolCall,
   resolveCircuitBreakerSettings,
-  type CircuitBreakerSettings,
 } from "./loop-detector"
 import {
   createSubagentDepthLimitError,
@@ -205,7 +204,6 @@ export class BackgroundManager {
   private enableParentSessionNotifications: boolean
   private modelFallbackControllerAccessor?: ModelFallbackControllerAccessor
   readonly taskHistory = new TaskHistory()
-  private cachedCircuitBreakerSettings?: CircuitBreakerSettings
 
   constructor(
     ctx: PluginInput,
@@ -1254,8 +1252,7 @@ The fallback retry session is now created and can be inspected directly.
 
         task.progress.toolCalls += 1
         task.progress.lastTool = partInfo.tool
-         const circuitBreaker = this.cachedCircuitBreakerSettings ?? resolveCircuitBreakerSettings(this.config)
-         this.cachedCircuitBreakerSettings = circuitBreaker
+         const circuitBreaker = resolveCircuitBreakerSettings(this.config, task.agent)
          if (partInfo.tool) {
            task.progress.toolCallWindow = recordToolCall(
              task.progress.toolCallWindow,

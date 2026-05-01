@@ -739,6 +739,108 @@ describe("checkAndInterruptStaleTasks", () => {
     expect(task.status).toBe("cancelled")
     expect(task.error).toContain("Stale timeout")
   })
+
+  it("should use per-agent stale timeout from agentOverrides config", async () => {
+    //#given - librarian task idle for 4 minutes, with a 5-minute agent override
+    const task = createRunningTask({
+      agent: "librarian",
+      progress: {
+        toolCalls: 5,
+        lastUpdate: new Date(fixedTime - 4 * 60 * 1000),
+      },
+    })
+
+    //#when
+    await checkAndInterruptStaleTasks({
+      tasks: [task],
+      client: mockClient as never,
+      config: {
+        staleTimeoutMs: 2_700_000,
+        agentOverrides: {
+          librarian: { staleTimeoutMs: 300_000 },
+        },
+      },
+      concurrencyManager: mockConcurrencyManager as never,
+      notifyParentSession: mockNotify,
+    })
+
+    //#then - 4 minutes < 5 minute override, so should still be running
+    expect(task.status).toBe("running")
+  })
+
+  it("should cancel librarian task that exceeds per-agent stale timeout", async () => {
+    //#given - librarian task idle for 6 minutes, with 5-minute agent override
+    const task = createRunningTask({
+      agent: "librarian",
+      progress: {
+        toolCalls: 5,
+        lastUpdate: new Date(fixedTime - 6 * 60 * 1000),
+      },
+    })
+
+    //#when
+    await checkAndInterruptStaleTasks({
+      tasks: [task],
+      client: mockClient as never,
+      config: {
+        staleTimeoutMs: 2_700_000,
+        agentOverrides: {
+          librarian: { staleTimeoutMs: 300_000 },
+        },
+      },
+      concurrencyManager: mockConcurrencyManager as never,
+      notifyParentSession: mockNotify,
+    })
+
+    //#then
+    expect(task.status).toBe("cancelled")
+  })
+
+  it("should use built-in agent default when no config staleTimeoutMs set", async () => {
+    //#given - explore task idle for 4 minutes (built-in default is 3 minutes)
+    const task = createRunningTask({
+      agent: "explore",
+      progress: {
+        toolCalls: 10,
+        lastUpdate: new Date(fixedTime - 4 * 60 * 1000),
+      },
+    })
+
+    //#when
+    await checkAndInterruptStaleTasks({
+      tasks: [task],
+      client: mockClient as never,
+      config: undefined,
+      concurrencyManager: mockConcurrencyManager as never,
+      notifyParentSession: mockNotify,
+    })
+
+    //#then - 4 minutes > 3 minute built-in default for explore
+    expect(task.status).toBe("cancelled")
+  })
+
+  it("should fall through to global default for agents without per-agent limits", async () => {
+    //#given - oracle task idle for 10 minutes (no per-agent default, global is 45 min)
+    const task = createRunningTask({
+      agent: "oracle",
+      progress: {
+        toolCalls: 50,
+        lastUpdate: new Date(fixedTime - 10 * 60 * 1000),
+      },
+    })
+
+    //#when
+    await checkAndInterruptStaleTasks({
+      tasks: [task],
+      client: mockClient as never,
+      config: { staleTimeoutMs: 2_700_000 },
+      concurrencyManager: mockConcurrencyManager as never,
+      notifyParentSession: mockNotify,
+    })
+
+    //#then - 10 minutes < 45 minute global default
+    expect(task.status).toBe("running")
+  })
 })
 
 describe("pruneStaleTasksAndNotifications", () => {

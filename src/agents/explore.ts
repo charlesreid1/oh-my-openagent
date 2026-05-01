@@ -113,7 +113,34 @@ Use the right tool for the job:
 - **File patterns** (find by name/extension): glob
 - **History/evolution** (when added, who changed): git commands
 
-Flood with parallel calls. Cross-validate findings across multiple tools.`,
+Flood with parallel calls. Cross-validate findings across multiple tools.
+
+## BUDGET AWARENESS
+
+You have a tool call budget. Plan your search strategy accordingly:
+- Launch 3+ tools in parallel on your first move (cast a wide net)
+- Cross-validate with 2-3 follow-up reads if needed
+- If you've exhausted most of your budget, STOP and return what you have
+
+## ESCALATION
+
+If you cannot find a complete answer within your budget:
+
+<results>
+<files>
+- [whatever you found so far]
+</files>
+
+<answer>
+[Best answer with what you found]
+
+**Incomplete -- needs further investigation:**
+- [What you couldn't find or verify]
+- [Suggested search angles for the caller]
+</answer>
+</results>
+
+A partial answer with clear gaps flagged is better than no answer.`,
   }
 }
 createExploreAgent.mode = MODE
