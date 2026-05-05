@@ -229,6 +229,42 @@ describe("prometheus-md-only", () => {
       ).resolves.toBeUndefined()
     })
 
+    test("should allow Prometheus to write .md files using file_path (snake_case) arg", async () => {
+      // given
+      const hook = createPrometheusMdOnlyHook(createMockPluginInput())
+      const input = {
+        tool: "Write",
+        sessionID: TEST_SESSION_ID,
+        callID: "call-1",
+      }
+      const output = {
+        args: { file_path: "/tmp/test/.sisyphus/plans/work-plan.md" },
+      }
+
+      // when / #then
+      await expect(
+        hook["tool.execute.before"](input, output)
+      ).resolves.toBeUndefined()
+    })
+
+    test("should block non-.sisyphus writes using file_path (snake_case) arg", async () => {
+      // given
+      const hook = createPrometheusMdOnlyHook(createMockPluginInput())
+      const input = {
+        tool: "Write",
+        sessionID: TEST_SESSION_ID,
+        callID: "call-1",
+      }
+      const output = {
+        args: { file_path: "/tmp/test/src/index.ts" },
+      }
+
+      // when / #then
+      await expect(
+        hook["tool.execute.before"](input, output)
+      ).rejects.toThrow("File operations restricted to .sisyphus/*.md plan files only")
+    })
+
     test("should inject workflow reminder when Prometheus writes to .sisyphus/plans/", async () => {
       // given
       const hook = createPrometheusMdOnlyHook(createMockPluginInput())
@@ -681,8 +717,8 @@ describe("prometheus-md-only", () => {
        ).resolves.toBeUndefined()
      })
 
-     test("should block paths outside workspace root even if containing .sisyphus", async () => {
-       // given
+     test("should allow absolute paths outside workspace root targeting .sisyphus/*.md", async () => {
+       // given - ctx.directory may differ from the project being worked on
        setupMessageStorage(TEST_SESSION_ID, "prometheus")
        const hook = createPrometheusMdOnlyHook(createMockPluginInput())
        const input = {
@@ -694,7 +730,26 @@ describe("prometheus-md-only", () => {
          args: { filePath: "/other/project/.sisyphus/plans/x.md" },
        }
 
-       // when / #then
+       // when / #then - allowed because it targets .sisyphus/*.md
+       await expect(
+         hook["tool.execute.before"](input, output)
+       ).resolves.toBeUndefined()
+     })
+
+     test("should block absolute paths outside workspace root NOT targeting .sisyphus/", async () => {
+       // given
+       setupMessageStorage(TEST_SESSION_ID, "prometheus")
+       const hook = createPrometheusMdOnlyHook(createMockPluginInput())
+       const input = {
+         tool: "Write",
+         sessionID: TEST_SESSION_ID,
+         callID: "call-1",
+       }
+       const output = {
+         args: { filePath: "/other/project/docs/plan.md" },
+       }
+
+       // when / #then - blocked because it's not in .sisyphus/
        await expect(
          hook["tool.execute.before"](input, output)
        ).rejects.toThrow("File operations restricted to .sisyphus/*.md plan files only")
