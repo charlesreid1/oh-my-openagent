@@ -36,6 +36,17 @@ describe("detectErrorType", () => {
     expect(result).toBe("thinking_disabled_violation")
   })
 
+  it("#given a Bedrock thinking signature required error #when detecting #then returns thinking_disabled_violation", () => {
+    //#given
+    const error = { message: "The model returned the following errors: messages.1.content.0.thinking.signature: Field required" }
+
+    //#when
+    const result = detectErrorType(error)
+
+    //#then
+    expect(result).toBe("thinking_disabled_violation")
+  })
+
   it("#given an unrecognized error #when detecting #then returns null", () => {
     //#given
     const error = { message: "some random error" }

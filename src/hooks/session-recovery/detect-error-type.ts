@@ -81,6 +81,10 @@ export function detectErrorType(error: unknown): RecoveryErrorType {
       return "thinking_disabled_violation"
     }
 
+    if (message.includes("thinking") && message.includes("signature") && message.includes("required")) {
+      return "thinking_disabled_violation"
+    }
+
     if (message.includes("tool_use") && message.includes("tool_result")) {
       return "tool_result_missing"
     }
