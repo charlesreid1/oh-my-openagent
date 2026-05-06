@@ -217,7 +217,6 @@ export class BackgroundManager {
   private modelFallbackControllerAccessor?: ModelFallbackControllerAccessor
   private loggedSessionStatusUnavailable = false
   readonly taskHistory = new TaskHistory()
-  private cachedCircuitBreakerSettings?: CircuitBreakerSettings
 
   constructor(config: BackgroundManagerConfig) {
     const { pluginContext, ...options } = config
@@ -1278,8 +1277,7 @@ The fallback retry session is now created and can be inspected directly.
 
         task.progress.toolCalls += 1
         task.progress.lastTool = partInfo.tool
-         const circuitBreaker = this.cachedCircuitBreakerSettings ?? resolveCircuitBreakerSettings(this.config)
-         this.cachedCircuitBreakerSettings = circuitBreaker
+         const circuitBreaker = resolveCircuitBreakerSettings(this.config, task.agent)
          if (partInfo.tool) {
            task.progress.toolCallWindow = recordToolCall(
              task.progress.toolCallWindow,

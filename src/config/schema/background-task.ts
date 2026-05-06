@@ -6,6 +6,15 @@ const CircuitBreakerConfigSchema = z.object({
   consecutiveThreshold: z.number().int().min(5).optional(),
 })
 
+const AgentTaskOverrideSchema = z.object({
+  /** Max tool calls for this agent type (overrides global maxToolCalls) */
+  maxToolCalls: z.number().int().min(5).optional(),
+  /** Stale timeout for this agent type in ms (overrides global staleTimeoutMs) */
+  staleTimeoutMs: z.number().min(30000).optional(),
+  /** Circuit breaker consecutive threshold override */
+  consecutiveThreshold: z.number().int().min(3).optional(),
+})
+
 export const BackgroundTaskConfigSchema = z.object({
   defaultConcurrency: z.number().min(1).optional(),
   providerConcurrency: z.record(z.string(), z.number().min(0)).optional(),
@@ -23,6 +32,8 @@ export const BackgroundTaskConfigSchema = z.object({
   /** Maximum tool calls per subagent task before circuit breaker triggers (default: 200, minimum: 10). Prevents runaway loops from burning unlimited tokens. */
   maxToolCalls: z.number().int().min(10).optional(),
   circuitBreaker: CircuitBreakerConfigSchema.optional(),
+  /** Per-agent-type overrides for background task limits */
+  agentOverrides: z.record(z.string(), AgentTaskOverrideSchema).optional(),
 })
 
 export type BackgroundTaskConfig = z.infer<typeof BackgroundTaskConfigSchema>

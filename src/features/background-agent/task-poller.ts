@@ -10,6 +10,7 @@ import {
   DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS,
   DEFAULT_SESSION_GONE_TIMEOUT_MS,
   DEFAULT_STALE_TIMEOUT_MS,
+  DEFAULT_AGENT_STALE_TIMEOUTS,
   MIN_RUNTIME_BEFORE_STALE_MS,
   TERMINAL_TASK_TTL_MS,
   TASK_TTL_MS,
@@ -120,15 +121,24 @@ export async function checkAndInterruptStaleTasks(args: {
     sessionStatuses,
     onTaskInterrupted = (task) => removeTaskToastTracking(task.id),
   } = args
-  const staleTimeoutMs = config?.staleTimeoutMs ?? DEFAULT_STALE_TIMEOUT_MS
   const sessionGoneTimeoutMs = config?.sessionGoneTimeoutMs ?? DEFAULT_SESSION_GONE_TIMEOUT_MS
   const now = Date.now()
   const abortPromises: Array<Promise<unknown>> = []
 
-  const messageStalenessMs = config?.messageStalenessTimeoutMs ?? DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS
-
   for (const task of tasks) {
     if (task.status !== "running") continue
+
+    const agentOverride = config?.agentOverrides?.[task.agent]
+    const staleTimeoutMs =
+      agentOverride?.staleTimeoutMs
+      ?? DEFAULT_AGENT_STALE_TIMEOUTS[task.agent]
+      ?? config?.staleTimeoutMs
+      ?? DEFAULT_STALE_TIMEOUT_MS
+    const messageStalenessMs =
+      agentOverride?.staleTimeoutMs
+      ?? DEFAULT_AGENT_STALE_TIMEOUTS[task.agent]
+      ?? config?.messageStalenessTimeoutMs
+      ?? DEFAULT_MESSAGE_STALENESS_TIMEOUT_MS
 
     const startedAt = task.startedAt
     const sessionID = task.sessionId
