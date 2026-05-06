@@ -29,8 +29,11 @@ export interface SessionRecoveryHook {
   setOnRecoveryCompleteCallback: (callback: (sessionID: string) => void) => void
 }
 
+const MAX_RECOVERY_ATTEMPTS_PER_SESSION = 3
+
 export function createSessionRecoveryHook(ctx: PluginInput, options?: SessionRecoveryOptions): SessionRecoveryHook {
   const processingErrors = new Set<string>()
+  const recoveryAttempts = new Map<string, number>()
   const experimental = options?.experimental
   let onAbortCallback: ((sessionID: string) => void) | null = null
   let onRecoveryCompleteCallback: ((sessionID: string) => void) | null = null
@@ -57,6 +60,13 @@ export function createSessionRecoveryHook(ctx: PluginInput, options?: SessionRec
     let assistantMsgID = info.id
 
     if (!sessionID) return false
+
+    const attempts = recoveryAttempts.get(sessionID) ?? 0
+    if (attempts >= MAX_RECOVERY_ATTEMPTS_PER_SESSION) {
+      log("[session-recovery] Max recovery attempts reached, giving up", { sessionID, attempts })
+      return false
+    }
+    recoveryAttempts.set(sessionID, attempts + 1)
 
     if (!assistantMsgID) {
       try {

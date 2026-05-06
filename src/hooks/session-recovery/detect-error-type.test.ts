@@ -47,6 +47,17 @@ describe("detectErrorType", () => {
     expect(result).toBe("thinking_disabled_violation")
   })
 
+  it("#given a Bedrock reasoning content error #when detecting #then returns thinking_disabled_violation", () => {
+    //#given
+    const error = { message: "User messages cannot contain reasoning content. Please remove the reasoning content and try again." }
+
+    //#when
+    const result = detectErrorType(error)
+
+    //#then
+    expect(result).toBe("thinking_disabled_violation")
+  })
+
   it("#given an unrecognized error #when detecting #then returns null", () => {
     //#given
     const error = { message: "some random error" }

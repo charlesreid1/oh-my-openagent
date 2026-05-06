@@ -85,6 +85,14 @@ export function detectErrorType(error: unknown): RecoveryErrorType {
       return "thinking_disabled_violation"
     }
 
+    if (message.includes("cannot contain reasoning content")) {
+      return "thinking_disabled_violation"
+    }
+
+    if (message.includes("cannot contain") && message.includes("reasoning")) {
+      return "thinking_disabled_violation"
+    }
+
     if (message.includes("tool_use") && message.includes("tool_result")) {
       return "tool_result_missing"
     }
